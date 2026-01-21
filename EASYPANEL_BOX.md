@@ -10,6 +10,18 @@ En Easypanel, un **Box** es un tipo de servicio que te da más control sobre la 
 
 ## ✅ Configuración Completa para Box
 
+### Opción A: Con Dockerfile (Recomendado)
+
+Esta es la opción recomendada porque es más eficiente y optimizada.
+
+### Opción B: Sin Dockerfile (Usando Deployment Script)
+
+Si prefieres ejecutar sin Dockerfile, usando directamente el Deployment Script y Processes.
+
+---
+
+## 📦 Opción A: Configuración con Dockerfile
+
 ### 1. Crear el Box
 
 1. En Easypanel, ve a tu proyecto
@@ -97,7 +109,137 @@ CMD ["sh", "-c", "nginx -t && nginx -g 'daemon off;'"]
 
 Esto valida la configuración de Nginx antes de iniciarlo.
 
-## 📋 Checklist de Configuración
+---
+
+## 📦 Opción B: Configuración SIN Dockerfile (Deployment Script)
+
+Esta opción ejecuta el build y el servidor directamente sin usar Dockerfile.
+
+### 1. Crear el Box
+
+1. En Easypanel, ve a tu proyecto
+2. Haz clic en **"+ Service"** o **"Templates"**
+3. Selecciona **"Box"** como tipo de servicio
+4. Asigna un nombre (ej: `camara-front-back-main-frontend-box`)
+
+### 2. Configuración del Repositorio (Source)
+
+En la sección **"Source"**:
+
+- **Owner:** `VLP-TECH`
+- **Repository:** `camara-front-back-main-frontend`
+- **Branch:** `main`
+- **Build Path:** `/` (raíz del proyecto)
+
+### 3. Configuración del Build
+
+En la sección **"Build"**:
+
+- **Método:** `Nixpacks` o `Buildpacks` (NO Dockerfile)
+- O dejar sin especificar Dockerfile
+
+### 4. Deployment Script
+
+En la sección **"Deployment Script"**, usa:
+
+```bash
+cd /code/frontend
+npm install
+npm run build
+supervisorctl restart vite-server
+```
+
+**Explicación:**
+- `cd /code/frontend` - Va al directorio del frontend
+- `npm install` - Instala las dependencias
+- `npm run build` - Construye la aplicación (genera `dist/`)
+- `supervisorctl restart vite-server` - Reinicia el proceso del servidor
+
+### 5. Configuración de Processes
+
+En la sección **"Processes"**, crea o actualiza el proceso:
+
+**Name:** `vite-server`
+
+**Command:**
+```bash
+npm start
+```
+
+**Directory:**
+```
+/code/frontend
+```
+
+**Enabled:** `ON`
+
+**Explicación:**
+- El comando `npm start` ejecuta `vite preview` que sirve los archivos estáticos desde `dist/`
+- El puerto por defecto es `4173` (o el definido en la variable `PORT`)
+
+### 6. Configuración de Puerto
+
+En la sección **"Ports"** o **"Network"**:
+
+- **Puerto interno:** `4173` (puerto de Vite preview)
+- **Puerto externo:** `4173` (o el que Easypanel asigne)
+- **Health Check Path:** `/` (Vite preview no tiene endpoint `/health` por defecto)
+
+### 7. Variables de Entorno
+
+En la sección **"Environment"**:
+
+**Requeridas:**
+```
+NODE_ENV=production
+PORT=4173
+```
+
+**Opcionales (si usas Supabase):**
+```
+VITE_SUPABASE_URL=tu-url-de-supabase
+VITE_SUPABASE_ANON_KEY=tu-clave-anon
+VITE_API_BASE_URL=http://tu-backend:8000
+```
+
+**⚠️ IMPORTANTE:**
+- Las variables `VITE_*` deben estar configuradas ANTES del build
+- `PORT=4173` define el puerto para `vite preview`
+
+### 8. Alternativa sin supervisorctl
+
+Si no usas supervisorctl, puedes iniciar directamente en el proceso:
+
+**Deployment Script:**
+```bash
+cd /code/frontend
+npm install
+npm run build
+```
+
+**Process (vite-server):**
+- **Name:** `vite-server`
+- **Command:** `npm start`
+- **Directory:** `/code/frontend`
+- **Enabled:** `ON`
+
+El proceso se iniciará automáticamente después del build.
+
+## 📋 Checklist de Configuración (Opción B: Sin Dockerfile)
+
+Antes de hacer deploy, verifica:
+
+- [ ] Tipo de servicio: **Box** (no Web-App)
+- [ ] Repositorio: `VLP-TECH/camara-front-back-main-frontend`
+- [ ] Rama: `main`
+- [ ] Build Path: `/`
+- [ ] Build Method: **NO Dockerfile** (Nixpacks/Buildpacks o vacío)
+- [ ] Deployment Script configurado con `cd /code/frontend`, `npm install`, `npm run build`
+- [ ] Process `vite-server` configurado con `npm start` en `/code/frontend`
+- [ ] Puerto interno: `4173`
+- [ ] Variables de entorno configuradas (`NODE_ENV=production`, `PORT=4173`)
+
+## 📋 Checklist de Configuración (Opción A: Con Dockerfile)
 
 Antes de hacer deploy, verifica:
 
@@ -114,14 +256,26 @@ Antes de hacer deploy, verifica:
 
 ## 🚀 Deploy
 
+### Con Dockerfile (Opción A)
+
 1. **Guardar** toda la configuración
 2. Hacer clic en **"Deploy"** o **"Deploy service"**
-3. Esperar a que el build complete
+3. Esperar a que el build de Docker complete
 4. Verificar que el contenedor esté corriendo
+
+### Sin Dockerfile (Opción B)
+
+1. **Guardar** toda la configuración (especialmente Deployment Script y Process)
+2. Hacer clic en **"Deploy"** o **"Deploy service"**
+3. El Deployment Script ejecutará `npm install` y `npm run build`
+4. El Process `vite-server` iniciará automáticamente con `npm start`
+5. Verificar que el proceso esté corriendo en la sección "Processes"
 
 ## ✅ Verificación Post-Deploy
 
-### 1. Verificar Build
+### Opción A: Con Dockerfile
+
+#### 1. Verificar Build
 
 El build debería mostrar:
 ```
@@ -135,23 +289,43 @@ Step XX/XX : COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 Step XX/XX : RUN nginx -t
 ```
 
-### 2. Verificar Contenedor
+#### 2. Verificar Contenedor
 
 - El contenedor debe estar en estado **"Running"**
 - Los logs deben mostrar: `nginx: configuration file /etc/nginx/nginx.conf test is successful`
 
-### 3. Verificar Health Check
+#### 3. Verificar Health Check
 
 ```bash
 curl http://tu-servidor/health
 # Debe responder: "healthy"
 ```
 
-### 4. Verificar Aplicación
+#### 4. Verificar Aplicación
 
 - Abre la URL del box en el navegador
 - Verifica que la aplicación carga correctamente
 - Verifica que no haya errores en la consola (F12)
+
+### Opción B: Sin Dockerfile
+
+#### 1. Verificar Deployment Script
+
+- Revisa los logs del Deployment Script
+- Debe mostrar: `npm install` completado y `npm run build` exitoso
+- Debe mostrar: `supervisorctl restart vite-server` ejecutado
+
+#### 2. Verificar Process
+
+- En la sección **"Processes"**, el proceso `vite-server` debe estar en estado **"Running"**
+- Los logs del proceso deben mostrar que Vite está sirviendo en el puerto 4173
+
+#### 3. Verificar Aplicación
+
+- Abre la URL del box en el navegador (puerto 4173)
+- Verifica que la aplicación carga correctamente
+- Verifica que no haya errores en la consola (F12)
+- Verifica que los archivos JS/CSS se cargan desde `/dist/`
 
 ## 🐛 Troubleshooting
 
@@ -221,6 +395,18 @@ El Dockerfile usa multi-stage build:
 - **.dockerignore** - Excluye archivos innecesarios del build
 - **frontend/package.json** - Dependencias del frontend
 
+### Diferencias entre Opciones
+
+| Aspecto | Con Dockerfile (Opción A) | Sin Dockerfile (Opción B) |
+|---------|---------------------------|---------------------------|
+| Build | En imagen Docker | En Deployment Script |
+| Servidor | Nginx (optimizado) | Vite preview |
+| Tamaño | ~25MB (imagen pequeña) | Mayor (Node.js completo) |
+| Performance | Mejor (Nginx) | Buena (Vite preview) |
+| Configuración | Más simple | Más flexible |
+| Procesos | No necesario | Requerido (vite-server) |
+| Health Check | `/health` endpoint | No disponible por defecto |
+
 ### Diferencias con Web-App
 
 | Aspecto | Web-App | Box |
@@ -228,7 +414,7 @@ El Dockerfile usa multi-stage build:
 | Tipo de servicio | Web-App | Box |
 | Configuración | Más simple | Más flexible |
 | Procesos | Automático | Configurable |
-| Dockerfile | Requerido | Requerido |
+| Dockerfile | Requerido | Opcional |
 | CMD | Opcional | Recomendado explícito |
 
 ### Optimizaciones Incluidas
