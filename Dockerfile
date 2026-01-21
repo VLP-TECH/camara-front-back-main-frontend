@@ -70,3 +70,6 @@ EXPOSE 80
 # Health check (using wget or fallback to test file existence)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
+
+# Start nginx (required for Easypanel)
+CMD ["nginx", "-g", "daemon off;"]
