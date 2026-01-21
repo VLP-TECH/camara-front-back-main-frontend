@@ -9,20 +9,24 @@ Configuración mínima para tener frontend y backend funcionando en Easypanel co
 ```
 Nombre: frontend-camara-vlc
 Tipo: App → Docker
-Repositorio: [tu-repo-frontend]
+Repositorio: https://github.com/VLP-TECH/camara-front-back-main.git
 Rama: main
-Dockerfile: Dockerfile
-Puerto: 4173
+Dockerfile: frontend/Dockerfile
+Build Context: frontend/
+Puerto Interno: 80
+Puerto Externo: 4173
+Health Check: /health
 ```
 
 ### Variables de Entorno:
 ```bash
 NODE_ENV=production
-PORT=4173
 VITE_SUPABASE_URL=[tu-url]
 VITE_SUPABASE_ANON_KEY=[tu-key]
 VITE_API_BASE_URL=http://backend-camara-vlc:8000
 ```
+
+**⚠️ Nota:** Ya NO necesitas `PORT=4173` porque Nginx usa puerto 80 internamente.
 
 ## 📦 Servicio 2: Backend
 

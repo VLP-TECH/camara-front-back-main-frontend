@@ -15,7 +15,7 @@ ERROR: resolve : lstat /etc/easypanel/projects/.../code/https:: no such file or 
 
 **URL del Repositorio:**
 ```
-https://github.com/VLP-TECH/ecosistema-valencia-view.git
+https://github.com/VLP-TECH/camara-front-back-main.git
 ```
 
 **Rama:**
@@ -27,18 +27,22 @@ main
 
 **Ruta del Dockerfile:**
 ```
-Dockerfile
+frontend/Dockerfile
 ```
 
-**O dejar en blanco** (Easypanel buscará automáticamente `Dockerfile` en la raíz)
+**Build Context:**
+```
+frontend/
+```
 
 **❌ NO usar:**
-- `https://github.com/VLP-TECH/ecosistema-valencia-view/blob/main/Dockerfile`
+- `https://github.com/VLP-TECH/camara-front-back-main/blob/main/frontend/Dockerfile`
 - `https:/github.com/...` (URLs web)
+- `Dockerfile` (sin especificar el contexto)
 
 **✅ Usar:**
-- `Dockerfile` (ruta relativa desde la raíz del repositorio)
-- O dejar vacío
+- `frontend/Dockerfile` (ruta relativa desde la raíz del repositorio)
+- Build Context: `frontend/`
 
 ### 3. Configuración del Build
 
@@ -70,20 +74,34 @@ Configurar las siguientes variables en Easypanel:
 
 ```
 NODE_ENV=production
-PORT=4173
 ```
+
+**⚠️ IMPORTANTE:** Ya NO necesitas `PORT=4173` porque Nginx usa el puerto 80 internamente.
 
 **Opcionales (si usas Supabase):**
 ```
 VITE_SUPABASE_URL=tu-url-de-supabase
 VITE_SUPABASE_ANON_KEY=tu-clave-anon
+VITE_API_BASE_URL=http://tu-backend:8000
 ```
+
+**Nota:** Las variables `VITE_*` deben estar configuradas ANTES del build, ya que se inyectan en tiempo de compilación.
 
 ### 6. Puerto
 
-**Puerto de la aplicación:**
+**Puerto interno del contenedor:**
+```
+80
+```
+
+**Puerto externo (mapeo):**
 ```
 4173
+```
+
+**Health Check Path:**
+```
+/health
 ```
 
 ## 🔧 Pasos para Corregir el Error
@@ -123,15 +141,25 @@ ERROR: resolve : lstat .../https:: no such file or directory
 - Verifica que Node.js 18 esté disponible
 
 ### Error: "Port already in use"
-- Verifica que el puerto 4173 esté configurado correctamente
-- Asegúrate de que no haya otro servicio usando el puerto
+- Verifica que el puerto externo (ej: 4173) esté configurado correctamente
+- El puerto interno siempre es 80 (Nginx)
+- Asegúrate de que no haya otro servicio usando el puerto externo
+
+### Error: "Health check failed"
+- Verifica que el health check path sea `/health`
+- El health check usa `wget` para verificar el endpoint
+- Asegúrate de que Nginx esté corriendo correctamente
 
 ## 📝 Notas Importantes
 
-- El Dockerfile está en la **raíz** del repositorio
+- El Dockerfile está en `frontend/Dockerfile`
+- Build Context debe ser `frontend/`
 - No uses URLs de GitHub para el Dockerfile
-- Usa solo la ruta relativa: `Dockerfile`
-- El Dockerfile usa multi-stage build para optimizar el tamaño
-- La aplicación corre en el puerto **4173** por defecto
+- El Dockerfile usa multi-stage build con Nginx Alpine
+- **Puerto interno:** 80 (Nginx estándar)
+- **Puerto externo:** 4173 (o el que configures en EasyPanel)
+- **Health check:** `/health`
+- La imagen final es ~25MB (vs ~150MB+ con Node.js)
+- Sin vulnerabilidades de npm en producción
 
 
