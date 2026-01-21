@@ -7,13 +7,16 @@ WORKDIR /app
 # Install dependencies first (for better caching)
 # Copy from frontend directory (build context is project root)
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm ci --prefer-offline --no-audit && \
+    npm cache clean --force
 
 # Copy source code from frontend directory
 COPY frontend/ .
 
 # Build the application
-RUN npm run build
+RUN npm run build && \
+    rm -rf node_modules && \
+    npm cache clean --force
 
 # Production stage (static with Nginx)
 FROM nginx:1.27-alpine AS runner
