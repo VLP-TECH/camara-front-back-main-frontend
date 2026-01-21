@@ -12,7 +12,7 @@ El proyecto incluye scripts automatizados para facilitar el deploy:
 # Hacer ejecutable
 chmod +x deploy.sh
 
-# Deploy con puerto por defecto (4173)
+# Deploy con puerto por defecto (80)
 ./deploy.sh
 
 # Deploy con puerto personalizado
@@ -103,11 +103,11 @@ docker ps
 docker logs ecosistema-valencia-view
 
 # 4. Verificar health check
-curl http://localhost:4173/health
+curl http://localhost/health
 # Debe responder: "healthy"
 
 # 5. Acceder a la aplicación
-# URL: http://localhost:4173
+# URL: http://localhost
 ```
 
 ### Configuración de Puerto
@@ -121,7 +121,7 @@ PORT=3000 docker-compose up --build -d
 
 **Configuración por defecto:**
 - Puerto interno: `80` (Nginx)
-- Puerto externo: `4173`
+- Puerto externo: `80` (coincide con interno)
 - Health check: `/health`
 
 ---
@@ -137,7 +137,7 @@ docker build -t frontend-app .
 # 2. Ejecutar el contenedor
 docker run -d \
   --name ecosistema-valencia-view \
-  -p 4173:80 \
+  -p 80:80 \
   -e NODE_ENV=production \
   --restart unless-stopped \
   frontend-app
@@ -146,7 +146,7 @@ docker run -d \
 docker logs -f ecosistema-valencia-view
 
 # 4. Verificar health check
-curl http://localhost:4173/health
+curl http://localhost/health
 ```
 
 ### Comandos Útiles
@@ -200,7 +200,7 @@ docker rmi frontend-app
 
 4. **Puerto:**
    - Puerto interno: `80`
-   - Puerto externo: `4173` (o el que prefieras)
+   - Puerto externo: `80` (coincide con interno)
    - Health check path: `/health`
 
 5. **Deploy:**
@@ -276,7 +276,7 @@ docker ps | grep ecosistema-valencia-view
 ### 2. Verificar Health Check
 
 ```bash
-curl http://localhost:4173/health
+curl http://localhost/health
 # Debe responder: "healthy"
 ```
 
@@ -284,11 +284,11 @@ curl http://localhost:4173/health
 
 ```bash
 # Verificar que responde
-curl -I http://localhost:4173
+curl -I http://localhost
 # Debe devolver HTTP 200
 
 # Verificar en navegador
-# Abre: http://localhost:4173
+# Abre: http://localhost
 ```
 
 ### 4. Verificar Logs
@@ -305,10 +305,10 @@ docker logs ecosistema-valencia-view
 
 ```bash
 # Encontrar proceso usando el puerto
-lsof -ti:4173
+lsof -ti:80
 
 # Matar proceso
-kill -9 $(lsof -ti:4173)
+kill -9 $(lsof -ti:80)
 
 # O matar múltiples puertos
 for port in 8080 8081 8082 8083; do
@@ -390,7 +390,7 @@ ls -la Dockerfile
 ### Puertos
 
 - **Puerto interno:** `80` (Nginx estándar)
-- **Puerto externo:** `4173` (configurable)
+- **Puerto externo:** `80` (coincide con interno para evitar errores)
 - **Health check:** `/health`
 
 ### Archivos Importantes

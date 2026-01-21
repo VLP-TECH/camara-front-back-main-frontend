@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: ecosistema-valencia-view
     ports:
-      - "${PORT:-4173}:80"
+      - "${PORT:-80}:80"
     environment:
       - NODE_ENV=production
     restart: unless-stopped

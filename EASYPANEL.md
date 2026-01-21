@@ -96,7 +96,7 @@ VITE_API_BASE_URL=http://tu-backend:8000
 
 **Puerto externo (mapeo):**
 ```
-4173
+80
 ```
 
 **Health Check Path:**
