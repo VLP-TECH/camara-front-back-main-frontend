@@ -7,7 +7,7 @@ WORKDIR /app
 # Install dependencies first (for better caching)
 # Copy from frontend directory (build context is project root)
 COPY frontend/package*.json ./
-RUN npm ci --prefer-offline --no-audit && \
+RUN npm install --no-audit && \
     npm cache clean --force
 
 # Copy source code from frontend directory

@@ -58,7 +58,6 @@ validate-dockerfile.sh
 # Docker files (excepto el que usamos)
 frontend/Dockerfile
 
-# Lock files innecesarios
+# Lock files innecesarios (excepto package-lock.json que es necesario para npm ci)
 bun.lockb
-package-lock.json
-frontend/package-lock.json
+# NO excluir package-lock.json - necesario para npm ci
