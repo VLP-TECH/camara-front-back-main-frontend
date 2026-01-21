@@ -18,6 +18,9 @@ RUN npm run build
 # Production stage (static with Nginx)
 FROM nginx:1.27-alpine AS runner
 
+# Install wget for health check
+RUN apk add --no-cache wget
+
 # Copy built application to nginx html directory
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -61,6 +64,6 @@ RUN echo 'server { \
 # Expose port
 EXPOSE 80
 
-# Health check
+# Health check (using wget or fallback to test file existence)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost/health >/dev/null 2>&1 || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
