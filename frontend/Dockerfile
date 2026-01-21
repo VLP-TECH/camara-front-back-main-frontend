@@ -15,40 +15,54 @@ COPY frontend/ .
 # Build the application
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine AS runner
+# Production stage (static with Nginx)
+FROM nginx:1.27-alpine AS runner
 
-# Set working directory
-WORKDIR /app
+# Copy built application to nginx html directory
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=4173
-
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# Copy only necessary files from builder
-COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
-COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Install only production dependencies (vite preview needs vite)
-RUN npm ci --omit=dev && \
-    npm cache clean --force
-
-# Switch to non-root user
-USER nextjs
+# Copy custom nginx configuration for SPA routing
+RUN echo 'server { \
+    listen 80; \
+    server_name _; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    \
+    # Gzip compression \
+    gzip on; \
+    gzip_vary on; \
+    gzip_min_length 1024; \
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/json application/javascript; \
+    \
+    # Security headers \
+    add_header X-Frame-Options "SAMEORIGIN" always; \
+    add_header X-Content-Type-Options "nosniff" always; \
+    add_header X-XSS-Protection "1; mode=block" always; \
+    \
+    # Cache static assets \
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ { \
+        expires 1y; \
+        add_header Cache-Control "public, immutable"; \
+    } \
+    \
+    # SPA routing - serve index.html for all routes \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+    \
+    # Health check endpoint \
+    location /health { \
+        access_log off; \
+        return 200 "healthy\n"; \
+        add_header Content-Type text/plain; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
 # Expose port
-EXPOSE 4173
+EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:4173', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-
-# Start the application
-CMD ["npm", "run", "start"]
+  CMD wget -qO- http://localhost/health >/dev/null 2>&1 || exit 1
 
 

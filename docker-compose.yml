@@ -7,13 +7,12 @@ services:
       dockerfile: Dockerfile
     container_name: ecosistema-valencia-view
     ports:
-      - "${PORT:-4173}:4173"
+      - "${PORT:-4173}:80"
     environment:
       - NODE_ENV=production
-      - PORT=4173
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4173', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
       interval: 30s
       timeout: 3s
       retries: 3

@@ -124,8 +124,9 @@ camara-vlc-front-back/
 docker build -t camara-vlc-app -f frontend/Dockerfile frontend/
 
 # 2. Ejecutar el contenedor
+# Nota: El puerto interno es 80 (Nginx), el externo puede ser cualquier puerto
 docker run -d \
-  -p 4173:4173 \
+  -p 4173:80 \
   --name camara-vlc-app \
   --env-file .env.production \
   camara-vlc-app
@@ -316,7 +317,7 @@ npm run build
 
 1. **Puerto por defecto:** 
    - Desarrollo: `8080`
-   - Producción: `4173`
+   - Producción: `80` (interno en contenedor, mapeado externamente a `4173` o el puerto que configures)
 
 2. **Archivos estáticos:** 
    - Después de `npm run build`, los archivos están en la carpeta `dist/`
